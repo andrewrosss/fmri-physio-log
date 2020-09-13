@@ -7,7 +7,7 @@ import fmri_physio_log as fpl
 
 
 def test_version():
-    assert fpl.__version__ == "0.0.1"
+    assert fpl.__version__ == "0.1.0"
 
 
 def test_measurement_summary():
