@@ -2,7 +2,25 @@
 name = "fmri-physio-log"
 version = "0.0.1"
 description = "Load fMRI PMU files into python"
-authors = ["Andrew Ross <andrew.ross.mail@gmail.com>"]
+authors = [
+    "Andrew Ross <andrew.ross.mail@gmail.com>"
+]
+license = "MIT"
+
+readme = "README.md"
+
+homepage = "https://github.com/datsyl/fmri-physio-log"
+repository = "https://github.com/datsyl/fmri-physio-log"
+documentation = "https://github.com/datsyl/fmri-physio-log"
+
+keywords = ["mri", "siemens", "pmu"]
+
+classifiers = [
+    "Programming Language :: Python :: 3.0",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "License :: OSI Approved :: MIT License",
+    "Development Status :: 4 - Beta",
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
