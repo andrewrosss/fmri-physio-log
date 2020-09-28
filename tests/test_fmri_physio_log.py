@@ -6,10 +6,6 @@ from numpy.testing import assert_allclose
 import fmri_physio_log as fpl
 
 
-def test_version():
-    assert fpl.__version__ == "0.1.0"
-
-
 def test_measurement_summary():
     m = fpl.MeasurementSummary(freq=1, per=2, min=3, max=4, avg=5, std_diff=6)
     assert m.freq == 1
