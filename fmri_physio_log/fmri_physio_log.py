@@ -190,7 +190,7 @@ class LogTime:
 
     def __repr__(self):
         start, stop = self.start, self.stop
-        return f"{self.__class__.__name__}({start=}, {stop=})"
+        return f"{self.__class__.__name__}(start={start!r}, stop={stop!r})"
 
     def __eq__(self: TLogTime, o: TLogTime) -> bool:
         return isinstance(o, LogTime) and self.start == o.start and self.stop == o.stop
