@@ -17,7 +17,7 @@ from . import constants as c
 class PhysioLog:
     def __init__(self, filename: Union[str, Path]):
         self.filename = Path(filename)
-        self.data_line=[]
+        self.data_line = []
 
         self.ts: np.ndarray
         self.rate: int
@@ -91,24 +91,24 @@ class PhysioLog:
             This method updates: self.ts, self.rate and self.params
         """
         # Sometimes the line ends with spaces, so don't use split(" ")
-        l=line.split()
-        if len(self.data_line)>0 or l[5].startswith('LOGVERSION_'):
-         # Extended processing, can have multiple data lines with Trig: lines inbetween
-         # All fields are accumulated in self.data_line
-         self.data_line.extend(l)
-         if l[-1]!='5003':
-          # Read continuation line(s)
-          return True
-         # End marker encountered: self.data_line complete
-         l=self.data_line
-         self.data_line=[] # Just to be tidy
-         while True:
-          try:
-           startmarker=l.index('5002')
-           endmarker=l.index('6002',startmarker+1)
-           del l[startmarker:(endmarker+1)]
-          except ValueError:
-           break
+        l = line.split()
+        if len(self.data_line) > 0 or l[5].startswith("LOGVERSION_"):
+            # Extended processing, can have multiple data lines with Trig: lines inbetween
+            # All fields are accumulated in self.data_line
+            self.data_line.extend(l)
+            if l[-1] != "5003":
+                # Read continuation line(s)
+                return True
+            # End marker encountered: self.data_line complete
+            l = self.data_line
+            self.data_line = []  # Just to be tidy
+            while True:
+                try:
+                    startmarker = l.index("5002")
+                    endmarker = l.index("6002", startmarker + 1)
+                    del l[startmarker : (endmarker + 1)]
+                except ValueError:
+                    break
         values = [int(v) for v in l]
         self.params = tuple(values[:4])  # type: ignore
         self.rate = values[2]
