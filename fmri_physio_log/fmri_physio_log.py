@@ -87,10 +87,19 @@ class PhysioLog:
         Note:
             This method updates: self.ts, self.rate and self.params
         """
-        values = [int(v) for v in line.split(" ")]
-        self.params = tuple(values[:5])  # type: ignore
+        l=line.split(" ")
+        if l[5].startswith('LOGVERSION_'):
+         while True:
+          try:
+           startmarker=l.index('5002')
+           endmarker=l.index('6002',startmarker+1)
+           del l[startmarker:(endmarker+1)]
+          except ValueError:
+           break
+        values = [int(v) for v in l]
+        self.params = tuple(values[:4])  # type: ignore
         self.rate = values[2]
-        self.ts = np.array([v for v in values[5:] if v < 5000])
+        self.ts = np.array([v for v in values[4:] if v < 5000])
 
     @staticmethod
     def parse_measurement_line(line: str) -> Tuple[str, Dict[str, int]]:
