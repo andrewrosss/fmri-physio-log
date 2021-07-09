@@ -87,7 +87,8 @@ class PhysioLog:
         Note:
             This method updates: self.ts, self.rate and self.params
         """
-        l=line.split(" ")
+        # Sometimes the line ends with spaces, so don't use split(" ")
+        l=line.split()
         if l[5].startswith('LOGVERSION_'):
          while True:
           try:
