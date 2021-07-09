@@ -40,7 +40,7 @@ class PhysioLog:
         content = self.filename.read_text()
         lines = content.splitlines()
 
-        # self.parse_data_line returns False if the data section is not finished
+        # self.parse_data_line returns False if the data section is finished
         while self.parse_data_line(lines.pop(0)):
             pass
 
