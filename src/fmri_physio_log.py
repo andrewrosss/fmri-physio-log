@@ -8,9 +8,6 @@ from pathlib import Path
 from typing import Any
 from typing import DefaultDict
 
-import numpy as np
-from numpy.typing import NDArray
-
 
 __version__ = "0.1.2"
 
@@ -25,7 +22,7 @@ class PhysioLog:
         self.filename = Path(filename)
         self.data_line: list[str] = []
 
-        self.ts: NDArray[np.int64]
+        self.ts: list[int]
         self.rate: int
         self.params: tuple[int, int, int, int, int]
 
@@ -118,7 +115,7 @@ class PhysioLog:
         values = [int(v) for v in l]
         self.params = tuple(values[:4])
         self.rate = values[2]
-        self.ts = np.array([v for v in values[4:] if v < 5000])  # type: ignore
+        self.ts = [v for v in values[4:] if v < 5000]
         return False
 
     @staticmethod
