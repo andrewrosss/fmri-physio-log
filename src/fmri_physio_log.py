@@ -11,7 +11,12 @@ from typing import Union
 
 import numpy as np
 
-from . import constants as c
+
+__version__ = "0.1.2"
+
+MEASUREMENT_PREFIXES = ["ECG", "PULS", "RESP", "EXT"]
+NR_PREFIXES = ["Nr"]
+TIME_PREFIXES = ["Log"]
 
 
 class PhysioLog:
