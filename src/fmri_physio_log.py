@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from typing import DefaultDict
+from typing import TextIO
 
 
 __version__ = "0.1.2"
@@ -18,8 +19,8 @@ TIME_PREFIXES = ["Log"]
 
 
 class PhysioLog:
-    def __init__(self, filename: str | Path):
-        self.filename = Path(filename)
+    def __init__(self, content: str):
+        self.content = content
         self.data_line: list[str] = []
 
         self.ts: list[int]
@@ -39,9 +40,18 @@ class PhysioLog:
         # this method sets all of the above values
         self.parse()
 
+    @classmethod
+    def from_file(cls, file: TextIO):
+        content = file.read()
+        return PhysioLog(content)
+
+    @classmethod
+    def from_filename(cls, filename: str | Path):
+        content = Path(filename).read_text()
+        return PhysioLog(content)
+
     def parse(self):
-        content = self.filename.read_text()
-        lines = content.splitlines()
+        lines = self.content.splitlines()
 
         # self.parse_data_line returns False if the data section is finished
         while self.parse_data_line(lines.pop(0)):
