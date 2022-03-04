@@ -1,18 +1,19 @@
+from __future__ import annotations
+
 import datetime
 import re
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 from typing import DefaultDict
-from typing import Dict
-from typing import Tuple
-from typing import TypeVar
-from typing import Union
 
 import numpy as np
+from numpy.typing import NDArray
 
 
 __version__ = "0.1.2"
+
 
 MEASUREMENT_PREFIXES = ["ECG", "PULS", "RESP", "EXT"]
 NR_PREFIXES = ["Nr"]
@@ -20,13 +21,13 @@ TIME_PREFIXES = ["Log"]
 
 
 class PhysioLog:
-    def __init__(self, filename: Union[str, Path]):
+    def __init__(self, filename: str | Path):
         self.filename = Path(filename)
-        self.data_line = []
+        self.data_line: list[str] = []
 
-        self.ts: np.ndarray
+        self.ts: NDArray[np.int64]
         self.rate: int
-        self.params: Tuple[int, int, int, int, int]
+        self.params: tuple[int, int, int, int, int]
 
         self.ecg: MeasurementSummary
         self.puls: MeasurementSummary
@@ -49,9 +50,9 @@ class PhysioLog:
         while self.parse_data_line(lines.pop(0)):
             pass
 
-        measurements: DefaultDict[str, Dict[str, int]] = defaultdict(dict)
-        nr: DefaultDict[str, Dict[str, int]] = defaultdict(dict)
-        timestamps: DefaultDict[str, Dict[str, int]] = defaultdict(dict)
+        measurements: DefaultDict[str, dict[str, int]] = defaultdict(dict)
+        nr: DefaultDict[str, dict[str, int]] = defaultdict(dict)
+        timestamps: DefaultDict[str, dict[str, int]] = defaultdict(dict)
         for line in lines:
             if self.is_measurement_line(line):
                 name, params = self.parse_measurement_line(line)
@@ -76,17 +77,17 @@ class PhysioLog:
 
     @staticmethod
     def is_measurement_line(line: str) -> bool:
-        return any(line.startswith(prefix) for prefix in c.MEASUREMENT_PREFIXES)
+        return any(line.startswith(prefix) for prefix in MEASUREMENT_PREFIXES)
 
     @staticmethod
     def is_nr_line(line: str) -> bool:
-        return any(line.startswith(prefix) for prefix in c.NR_PREFIXES)
+        return any(line.startswith(prefix) for prefix in NR_PREFIXES)
 
     @staticmethod
     def is_time_line(line: str) -> bool:
-        return any(line.startswith(prefix) for prefix in c.TIME_PREFIXES)
+        return any(line.startswith(prefix) for prefix in TIME_PREFIXES)
 
-    def parse_data_line(self, line: str) -> None:
+    def parse_data_line(self, line: str) -> bool:
         """Parses the data line (first line) of a physio file.
 
         Args:
@@ -115,22 +116,22 @@ class PhysioLog:
                 except ValueError:
                     break
         values = [int(v) for v in l]
-        self.params = tuple(values[:4])  # type: ignore
+        self.params = tuple(values[:4])
         self.rate = values[2]
-        self.ts = np.array([v for v in values[4:] if v < 5000])
+        self.ts = np.array([v for v in values[4:] if v < 5000])  # type: ignore
         return False
 
     @staticmethod
-    def parse_measurement_line(line: str) -> Tuple[str, Dict[str, int]]:
+    def parse_measurement_line(line: str) -> tuple[str, dict[str, int]]:
         """Parses lines starting with any of the values in
-        constants.MEASUREMENT_PREFIXES
+        MEASUREMENT_PREFIXES
 
         Args:
             line (str): The line to parse.
 
         Returns:
-            Tuple[str, Dict[str, int]]: The first element is the line name, the second
-            element is a dict mapping parameter names to the associated values.
+            The first element is the line name, the second element is a
+            dict mapping parameter names to the associated values.
 
         Examples:
             >>> line = 'PULS Freq Per: 64 926'
@@ -144,15 +145,15 @@ class PhysioLog:
         return name.lower(), group_params(param_string)
 
     @staticmethod
-    def parse_nr_line(line: str) -> Tuple[str, Dict[str, int]]:
-        """Parses lines starting with any of the values in constants.NR_PREFIXES
+    def parse_nr_line(line: str) -> tuple[str, dict[str, int]]:
+        """Parses lines starting with any of the values in NR_PREFIXES
 
         Args:
             line (str): The line to parse.
 
         Returns:
-            Tuple[str, Dict[str, int]]: The first element is the line name, the second
-            element is a dict mapping parameter names to the associated values.
+            The first element is the line name, the second element is a
+            dict mapping parameter names to the associated values.
 
         Examples:
             >>> line = 'NrTrig NrMP NrArr AcqWin: 0 0 0 0'
@@ -162,15 +163,15 @@ class PhysioLog:
         return ("nr", group_params(line))
 
     @staticmethod
-    def parse_time_line(line: str) -> Tuple[str, Dict[str, int]]:
-        """Parses lines starting with any of the values in constants.TIME_PREFIXES
+    def parse_time_line(line: str) -> tuple[str, dict[str, int]]:
+        """Parses lines starting with any of the values in TIME_PREFIXES
 
         Args:
             line (str): The line to parse.
 
         Returns:
-            Tuple[str, Dict[str, int]]: The first element is the line name, the second
-            element is a dict mapping start/stop to the associated value.
+            The first element is the line name, the second element is a dict
+            mapping start/stop to the associated value.
 
         Examples:
             >>> line = 'LogStopMDHTime:   51988085'
@@ -181,9 +182,11 @@ class PhysioLog:
             ('mpcu', {'start': 51596615})
         """
         event_type, time_string = re.split(r": +", line)
-        result = re.search(r"Log(?P<key>S[a-z]+)(?P<name>[A-Z]+)Time", event_type)
-        name = result.group("name").lower()
-        key = result.group("key").lower()
+        match = re.search(r"Log(?P<key>S[a-z]+)(?P<name>[A-Z]+)Time", event_type)
+        if match is None:
+            raise ValueError(f"Failed to parse line: {line!r}")
+        name = match.group("name").lower()
+        key = match.group("key").lower()
         value = int(time_string)
         return name, {key: value}
 
@@ -206,9 +209,6 @@ class NrSummary:
     acq_win: int
 
 
-TLogTime = TypeVar("TLogTime", bound="LogTime")
-
-
 class LogTime:
     def __init__(self, start: int, stop: int):
         self.start = start
@@ -220,8 +220,12 @@ class LogTime:
         start, stop = self.start, self.stop
         return f"{self.__class__.__name__}(start={start!r}, stop={stop!r})"
 
-    def __eq__(self: TLogTime, o: TLogTime) -> bool:
-        return isinstance(o, LogTime) and self.start == o.start and self.stop == o.stop
+    def __eq__(self, o: Any) -> bool:
+        return (
+            isinstance(o, self.__class__)
+            and self.start == o.start
+            and self.stop == o.stop
+        )
 
     @staticmethod
     def logptime(timestamp: int) -> datetime.time:
@@ -255,7 +259,7 @@ def group_params(s: str):
         s (str): The parameter string to parse.
 
     Returns:
-        Dict[str, int]: The mapping of parameter names to parameter values.
+        dict[str, int]: The mapping of parameter names to parameter values.
 
     Note:
         Parameter names are converted from PascalCase to snake_case.
