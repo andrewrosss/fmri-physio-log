@@ -1,7 +1,5 @@
 import datetime
-
-import numpy as np
-from numpy.testing import assert_allclose
+from pathlib import Path
 
 import fmri_physio_log as fpl
 
@@ -32,44 +30,47 @@ def test_log_time():
     assert l.stop_time == datetime.time(1, 0, 0, 1000)
 
 
-def test_physio_log(sample_puls_file):
-    log = fpl.PhysioLog(sample_puls_file)
+def test_physio_log(sample_puls_file: Path):
+    log = fpl.PhysioLog.from_filename(sample_puls_file)
 
-    assert_allclose(
-        log.ts,
-        np.array(
-            [
-                508,
-                520,
-                532,
-                638,
-                708,
-                790,
-                814,
-                1037,
-                1108,
-                1072,
-                1190,
-                1413,
-                1495,
-                1695,
-            ]
-        ),
-    )
+    _e = [367, 508, 520, 532, 638, 708, 790, 814, 1037, 1108, 1072, 1190, 1413]
+    assert len(log.ts) == len(_e)
+    assert all(a == e for a, e in zip(log.ts, _e))
+
     assert log.rate == 20
-    assert log.params == (1, 8, 20, 2, 367)
+    assert log.params == (1, 8, 20, 2)
 
     assert log.ecg == fpl.MeasurementSummary(
-        freq=0, per=0, min=0, max=0, avg=0, std_diff=0
+        freq=0,
+        per=0,
+        min=0,
+        max=0,
+        avg=0,
+        std_diff=0,
     )
     assert log.puls == fpl.MeasurementSummary(
-        freq=72, per=823, min=355, max=1646, avg=795, std_diff=5
+        freq=72,
+        per=823,
+        min=355,
+        max=1646,
+        avg=795,
+        std_diff=5,
     )
     assert log.resp == fpl.MeasurementSummary(
-        freq=0, per=0, min=0, max=0, avg=0, std_diff=0
+        freq=0,
+        per=0,
+        min=0,
+        max=0,
+        avg=0,
+        std_diff=0,
     )
     assert log.ext == fpl.MeasurementSummary(
-        freq=0, per=0, min=0, max=0, avg=0, std_diff=0
+        freq=0,
+        per=0,
+        min=0,
+        max=0,
+        avg=0,
+        std_diff=0,
     )
 
     assert log.nr == fpl.NrSummary(nr_trig=0, nr_m_p=0, nr_arr=0, acq_win=0)
