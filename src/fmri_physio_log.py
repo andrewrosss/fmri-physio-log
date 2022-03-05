@@ -21,7 +21,7 @@ TIME_PREFIXES = ["Log"]
 class PhysioLog:
     def __init__(self, content: str):
         self.content = content
-        self.data_line: list[str] = []
+        self._data_line: list[str] = []
 
         self.ts: list[int]
         self.rate: int
@@ -103,26 +103,25 @@ class PhysioLog:
         Note:
             This method updates: self.ts, self.rate and self.params
         """
-        # Sometimes the line ends with spaces, so don't use split(" ")
-        l = line.split()
-        if len(self.data_line) > 0 or l[5].startswith("LOGVERSION_"):
-            # Extended processing, can have multiple data lines with Trig: lines inbetween
-            # All fields are accumulated in self.data_line
-            self.data_line.extend(l)
-            if l[-1] != "5003":
+        lst = line.split()
+        if len(self._data_line) > 0 or lst[5].startswith("LOGVERSION_"):
+            # Extended processing, can have multiple data lines with Trig: lines
+            # inbetween. All fields are accumulated in self._data_line
+            self._data_line.extend(lst)
+            if lst[-1] != "5003":
                 # Read continuation line(s)
                 return True
-            # End marker encountered: self.data_line complete
-            l = self.data_line
-            self.data_line = []  # Just to be tidy
+            # End marker encountered: self._data_line complete
+            lst = self._data_line
+            self._data_line = []  # Just to be tidy
             while True:
                 try:
-                    startmarker = l.index("5002")
-                    endmarker = l.index("6002", startmarker + 1)
-                    del l[startmarker : (endmarker + 1)]
+                    startmarker = lst.index("5002")
+                    endmarker = lst.index("6002", startmarker + 1)
+                    del lst[startmarker : (endmarker + 1)]  # noqa: E203
                 except ValueError:
                     break
-        values = [int(v) for v in l]
+        values = [int(v) for v in lst]
         self.params = tuple(values[:4])
         self.rate = values[2]
         self.ts = [v for v in values[4:] if v < 5000]
@@ -284,7 +283,7 @@ def group_params(s: str):
         zip(
             (to_snake_case(name) for name in param_names.split(" ")),
             (int(value) for value in param_values.split(" ")),
-        )
+        ),
     )
 
 
