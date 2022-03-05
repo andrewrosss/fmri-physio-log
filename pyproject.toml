@@ -9,9 +9,9 @@ license = "MIT"
 
 readme = "README.md"
 
-homepage = "https://github.com/datsyl/fmri-physio-log"
-repository = "https://github.com/datsyl/fmri-physio-log"
-documentation = "https://github.com/datsyl/fmri-physio-log"
+homepage = "https://github.com/andrewrosss/fmri-physio-log"
+repository = "https://github.com/andrewrosss/fmri-physio-log"
+documentation = "https://github.com/andrewrosss/fmri-physio-log"
 
 keywords = ["mri", "siemens", "pmu"]
 
