@@ -1,31 +1,36 @@
 from __future__ import annotations
 
 import datetime
-import re
 from collections import defaultdict
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from typing import DefaultDict
+from typing import NamedTuple
 from typing import TextIO
+
+from pyparsing import Group
+from pyparsing import Literal
+from pyparsing import nums
+from pyparsing import OneOrMore
+from pyparsing import ParseResults
+from pyparsing import printables
+from pyparsing import Suppress
+from pyparsing import Word
 
 
 __version__ = "0.1.2"
 
 
-MEASUREMENT_PREFIXES = ["ECG", "PULS", "RESP", "EXT"]
-NR_PREFIXES = ["Nr"]
-TIME_PREFIXES = ["Log"]
-
-
 class PhysioLog:
     def __init__(self, content: str):
         self.content = content
-        self._data_line: list[str] = []
+        self._grammar = create_grammar()
 
-        self.ts: list[int]
+        self._parse_results: ParseResults
+
+        self.params: tuple[int, ...]
         self.rate: int
-        self.params: tuple[int, int, int, int, int]
+        self.info: list[str]
+        self.ts: list[int]
 
         self.ecg: MeasurementSummary
         self.puls: MeasurementSummary
@@ -51,154 +56,131 @@ class PhysioLog:
         return PhysioLog(content)
 
     def parse(self):
-        lines = self.content.splitlines()
+        # parse the content with the grammer
+        self._parse_results = self._grammar.parse_string(self.content)
 
-        # self.parse_data_line returns False if the data section is finished
-        while self.parse_data_line(lines.pop(0)):
-            pass
+        # the results are split into two top-level groups: the body and the footer.
+        # since ParseResults are iterable we can unpack the sections like this
+        body, footer = self._parse_results
 
-        measurements: DefaultDict[str, dict[str, int]] = defaultdict(dict)
-        nr: DefaultDict[str, dict[str, int]] = defaultdict(dict)
-        timestamps: DefaultDict[str, dict[str, int]] = defaultdict(dict)
-        for line in lines:
-            if self.is_measurement_line(line):
-                name, params = self.parse_measurement_line(line)
-                measurements[name].update(params)
-            elif self.is_nr_line(line):
-                name, params = self.parse_nr_line(line)
-                nr[name].update(params)
-            elif self.is_time_line(line):
-                name, params = self.parse_time_line(line)
-                timestamps[name].update(params)
+        # interpret the results and "populate" this instance
+        self._body(body)
+        self._footer(footer)
+
+    def _body(self, body: ParseResults) -> None:
+        """Interpret the physio file body (everything before the '5003' tag)
+
+        The body is composed of the initial physio params
+        (which includes the sampling rate), info sections,
+        and the data.
+        """
+        _params, *_data = body
+        self.params = tuple(int(s) for s in _params)
+        self.rate = self.params[2] if len(self.params) == 4 else self.params[3]
+        self.info = []
+        self.ts = []
+        for expr in _data:
+            if isinstance(expr, ParseResults):
+                self.info.append(str(expr[0]))
+            elif isinstance(expr, str):
+                self.ts.append(int(expr))
             else:
-                pass
+                raise SyntaxError(f"Unknown token in body {expr!r}")
 
-        for attr, kwargs in measurements.items():
-            setattr(self, attr, MeasurementSummary(**kwargs))
+    def _footer(self, footer: ParseResults) -> None:
+        """Interpret the physio footer (everything after the '5003' tag)
 
-        for attr, kwargs in nr.items():
-            setattr(self, attr, NrSummary(**kwargs))
-
-        for attr, kwargs in timestamps.items():
-            setattr(self, attr, LogTime(**kwargs))
-
-    @staticmethod
-    def is_measurement_line(line: str) -> bool:
-        return any(line.startswith(prefix) for prefix in MEASUREMENT_PREFIXES)
-
-    @staticmethod
-    def is_nr_line(line: str) -> bool:
-        return any(line.startswith(prefix) for prefix in NR_PREFIXES)
-
-    @staticmethod
-    def is_time_line(line: str) -> bool:
-        return any(line.startswith(prefix) for prefix in TIME_PREFIXES)
-
-    def parse_data_line(self, line: str) -> bool:
-        """Parses the data line (first line) of a physio file.
-
-        Args:
-            line (str): The line to parse.
-
-        Note:
-            This method updates: self.ts, self.rate and self.params
+        The footer si composed of the 'measurement summaries'
+        (freq, per, min, max, etc.), the 'nr summary' and 'log times'
         """
-        lst = line.split()
-        if len(self._data_line) > 0 or lst[5].startswith("LOGVERSION_"):
-            # Extended processing, can have multiple data lines with Trig: lines
-            # inbetween. All fields are accumulated in self._data_line
-            self._data_line.extend(lst)
-            if lst[-1] != "5003":
-                # Read continuation line(s)
-                return True
-            # End marker encountered: self._data_line complete
-            lst = self._data_line
-            self._data_line = []  # Just to be tidy
-            while True:
-                try:
-                    startmarker = lst.index("5002")
-                    endmarker = lst.index("6002", startmarker + 1)
-                    del lst[startmarker : (endmarker + 1)]  # noqa: E203
-                except ValueError:
-                    break
-        values = [int(v) for v in lst]
-        self.params = tuple(values[:4])
-        self.rate = values[2]
-        self.ts = [v for v in values[4:] if v < 5000]
-        return False
+        _summaries: dict[str, list[int]] = defaultdict(list)
+        _logs: dict[str, list[int]] = defaultdict(list)
 
-    @staticmethod
-    def parse_measurement_line(line: str) -> tuple[str, dict[str, int]]:
-        """Parses lines starting with any of the values in
-        MEASUREMENT_PREFIXES
+        # organize the parsed footer
+        for expr in footer:
+            if expr.get_name() in ("rate", "stat"):
+                # rates come before stats, so they'll get packed in first
+                # in the resulting list
+                key, *values = expr
+                _summaries[key].extend([int(v) for v in values])
+            elif expr.get_name() == "nr":
+                self.nr = NrSummary(*(int(v) for v in expr))
+            elif expr.get_name() == "log":
+                # start times come before stop times, so they'll get packed in
+                # first in the resulting list
+                _, key, value = expr
+                _logs[key].append(int(value))
+            else:
+                raise SyntaxError(f"Unknown token in footer {expr!r}")
 
-        Args:
-            line (str): The line to parse.
+        # set the measurement summary attributes
+        for attr, values in _summaries.items():
+            setattr(self, attr.lower(), MeasurementSummary(*values))
 
-        Returns:
-            The first element is the line name, the second element is a
-            dict mapping parameter names to the associated values.
-
-        Examples:
-            >>> line = 'PULS Freq Per: 64 926'
-            >>> PhysioLog.parse_measurement_line(line)
-            ('puls', {'freq': 64, 'per': 926})
-            >>> line = 'RESP Min Max Avg StdDiff: 3960 3960 3960 0'
-            >>> PhysioLog.parse_measurement_line(line)
-            ('resp', {'min': 3960, 'max': 3960, 'avg': 3960, 'std_diff': 0})
-        """
-        name, param_string = re.sub(r" +", " ", line).split(" ", 1)
-        return name.lower(), group_params(param_string)
-
-    @staticmethod
-    def parse_nr_line(line: str) -> tuple[str, dict[str, int]]:
-        """Parses lines starting with any of the values in NR_PREFIXES
-
-        Args:
-            line (str): The line to parse.
-
-        Returns:
-            The first element is the line name, the second element is a
-            dict mapping parameter names to the associated values.
-
-        Examples:
-            >>> line = 'NrTrig NrMP NrArr AcqWin: 0 0 0 0'
-            >>> PhysioLog.parse_nr_line(line)
-            ('nr', {'nr_trig': 0, 'nr_m_p': 0, 'nr_arr': 0, 'acq_win': 0})
-        """
-        return ("nr", group_params(line))
-
-    @staticmethod
-    def parse_time_line(line: str) -> tuple[str, dict[str, int]]:
-        """Parses lines starting with any of the values in TIME_PREFIXES
-
-        Args:
-            line (str): The line to parse.
-
-        Returns:
-            The first element is the line name, the second element is a dict
-            mapping start/stop to the associated value.
-
-        Examples:
-            >>> line = 'LogStopMDHTime:   51988085'
-            >>> PhysioLog.parse_time_line(line)
-            ('mdh', {'stop': 51988085})
-            >>> line = 'LogStartMPCUTime: 51596615'
-            >>> PhysioLog.parse_time_line(line)
-            ('mpcu', {'start': 51596615})
-        """
-        event_type, time_string = re.split(r": +", line)
-        match = re.search(r"Log(?P<key>S[a-z]+)(?P<name>[A-Z]+)Time", event_type)
-        if match is None:
-            raise ValueError(f"Failed to parse line: {line!r}")
-        name = match.group("name").lower()
-        key = match.group("key").lower()
-        value = int(time_string)
-        return name, {key: value}
+        # set the log time attributes
+        for attr, values in _logs.items():
+            setattr(self, attr.lower(), LogTime(*values))
 
 
-@dataclass
-class MeasurementSummary:
+def create_grammar():
+    _int = Word(nums)
+
+    # footer
+    modality = Literal("ECG") | Literal("PULS") | Literal("RESP") | Literal("EXT")
+    log_type = Literal("MDH") | Literal("MPCU")
+    log_event = Literal("Start") | Literal("Stop")
+    rate = (
+        Suppress("Freq") + Suppress("Per") + Suppress(":") + _int("freq") + _int("per")
+    )
+    stat = (
+        Suppress("Min")
+        + Suppress("Max")
+        + Suppress("Avg")
+        + Suppress("StdDiff")
+        + Suppress(":")
+        + _int("min")
+        + _int("max")
+        + _int("avg")
+        + _int("stddiff")
+    )
+    log_key = Suppress("Log") + log_event("event") + log_type("type") + Suppress("Time")
+    log_line = log_key + Suppress(":") + _int("time")
+    nr_line = (
+        Suppress("NrTrig")
+        + Suppress("NrMP")
+        + Suppress("NrArr")
+        + Suppress("AcqWin")
+        + Suppress(":")
+        + _int("nrtrig")
+        + _int("nrmp")
+        + _int("nrarr")
+        + _int("acqwin")
+    )
+    stat_line = modality("modality") + stat
+    rate_line = modality("modality") + rate
+    footer_line = (
+        rate_line("rate") | stat_line("stat") | nr_line("nr") | log_line("log")
+    )
+    footer = Suppress("5003") + OneOrMore(Group(footer_line)) + Suppress("6003")
+
+    # body
+    info = (
+        Suppress("5002")
+        + OneOrMore(Word(printables), stop_on="6002").set_parse_action(" ".join)
+        + Suppress("6002")
+    )
+    data = OneOrMore(Group(info("info")) | Suppress("5000") | _int, stop_on="5003")
+    detailed_params = Group(_int[4, 5]("params")) + Group(info("info"))
+    simple_params = Group(_int[4]("params"))
+    params = detailed_params | simple_params
+    body = params + data
+
+    grammar = Group(body("body")) + Group(footer("footer"))
+
+    return grammar
+
+
+class MeasurementSummary(NamedTuple):
     freq: int
     per: int
     min: int
@@ -207,8 +189,7 @@ class MeasurementSummary:
     std_diff: int
 
 
-@dataclass
-class NrSummary:
+class NrSummary(NamedTuple):
     nr_trig: int
     nr_m_p: int
     nr_arr: int
@@ -256,55 +237,3 @@ class LogTime:
         sec = int(timestamp / 1000) - (hour * 60 * 60 + min * 60)
         msec = timestamp - (hour * 1000 * 60 * 60 + min * 1000 * 60 + sec * 1000)
         return datetime.time(hour, min, sec, msec * 1000)  # since midnight
-
-
-def group_params(s: str):
-    """Maps parameter names to paramter values specified in a parameter string.
-
-    Args:
-        s (str): The parameter string to parse.
-
-    Returns:
-        dict[str, int]: The mapping of parameter names to parameter values.
-
-    Note:
-        Parameter names are converted from PascalCase to snake_case.
-
-    Examples:
-        >>> param_string = 'Freq Per: 64 926'
-        >>> group_params(param_string)
-        {'freq': 64, 'per': 926}
-        >>> param_string = 'Min Max Avg StdDiff: 923 931 925 1'
-        >>> group_params(param_string)
-        {'min': 923, 'max': 931, 'avg': 925, 'std_diff': 1}
-    """
-    param_names, param_values = re.split(r": +", s)
-    return dict(
-        zip(
-            (to_snake_case(name) for name in param_names.split(" ")),
-            (int(value) for value in param_values.split(" ")),
-        ),
-    )
-
-
-def to_snake_case(s: str) -> str:
-    """Converts a string from PascalCase to snake_case.
-
-    Args:
-        s (str): The string to convert.
-
-    Returns:
-        str: The converted string.
-
-    Examples:
-        >>> s1 = 'PascalCase'
-        >>> to_snake_case(s1)
-        'pascal_case'
-        >>> s2 = 'SomeOtherName'
-        >>> to_snake_case(s2)
-        'some_other_name'
-        >>> s3 = 'ThisIsAVariableName'
-        >>> to_snake_case(s3)
-        'this_is_a_variable_name'
-    """
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", s).lower()
