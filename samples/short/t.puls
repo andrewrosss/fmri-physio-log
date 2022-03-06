@@ -1,0 +1,15 @@
+1 2 40 280 1236 1251 5000 1679 1871 5003
+ECG  Freq Per: 0 0
+PULS Freq Per: 75 790
+RESP Freq Per: 11 5400
+EXT  Freq Per: 0 0
+ECG  Min Max Avg StdDiff: 0 0 0 0
+PULS Min Max Avg StdDiff: 211 1055 530 47
+RESP Min Max Avg StdDiff: 4400 5600 5000 81
+EXT  Min Max Avg StdDiff: 0 0 0 0
+NrTrig NrMP NrArr AcqWin: 0 0 0 0
+LogStartMDHTime:  45927830
+LogStopMDHTime:   46462892
+LogStartMPCUTime: 45927920
+LogStopMPCUTime:  46462615
+6003
