@@ -19,9 +19,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install poetry==1.1.12
-          BLACK_VERSION=$(poetry show black | grep version | rev | cut -d " "  -f 1 | rev)
-          FLAKE8_VERSION=$(poetry show flake8 | grep version | rev | cut -d " "  -f 1 | rev)
-          pip install "black==${BLACK_VERSION}" "flake8==${FLAKE8_VERSION}"
+          BLACK_MIN_VERSION=$(grep "black" pyproject.toml | grep -oE "\d+\.\d+.\d+")
+          FLAKE8_MIN_VERSION=$(grep "flake8" pyproject.toml | grep -oE "\d+\.\d+.\d+")
+          pip install "black>=${BLACK_MIN_VERSION}" "flake8>=${FLAKE8_MIN_VERSION}"
 
       - name: Lint with flake8
         run: |
