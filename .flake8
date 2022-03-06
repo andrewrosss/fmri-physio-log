@@ -1,0 +1,3 @@
+[flake8]
+per-file-ignores =
+     tests/fmri_physio_log_test.py: E501
