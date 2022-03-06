@@ -30,10 +30,176 @@ def test_log_time():
     assert l.stop_time == datetime.time(1, 0, 0, 1000)
 
 
-def test_physio_log(sample_puls_file: Path):
+INPUT1_S = """\
+1 2 40 280 1236 1251 5000 1679 1871 5003
+ECG  Freq Per: 0 0
+PULS Freq Per: 75 790
+RESP Freq Per: 11 5400
+EXT  Freq Per: 0 0
+ECG  Min Max Avg StdDiff: 0 0 0 0
+PULS Min Max Avg StdDiff: 211 1055 530 47
+RESP Min Max Avg StdDiff: 4400 5600 5000 81
+EXT  Min Max Avg StdDiff: 0 0 0 0
+NrTrig NrMP NrArr AcqWin: 0 0 0 0
+LogStartMDHTime:  45927830
+LogStopMDHTime:   46462892
+LogStartMPCUTime: 45927920
+LogStopMPCUTime:  46462615
+6003
+"""
+
+
+def test_physio_log_simple_1():
+    log = fpl.PhysioLog(INPUT1_S)
+
+    expected = [1236, 1251, 1679, 1871]
+    assert len(log.ts) == len(expected)
+    assert all(a == e for a, e in zip(log.ts, expected))
+
+    assert log.rate == 40
+    assert log.params == (1, 2, 40, 280)
+    assert log.info == []
+
+    assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+    assert log.puls == fpl.MeasurementSummary(75, 790, 211, 1055, 530, 47)
+    assert log.resp == fpl.MeasurementSummary(11, 5400, 4400, 5600, 5000, 81)
+    assert log.ext == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+
+    assert log.nr == fpl.NrSummary(0, 0, 0, 0)
+
+    assert log.mdh == fpl.LogTime(start=45927830, stop=46462892)
+    assert log.mpcu == fpl.LogTime(start=45927920, stop=46462615)
+
+
+INPUT2_S = """\
+1 8 20 2 367 508 520 532 638 708 790 5000 1037 1108 1072 1190 1413 5003
+ECG  Freq Per: 0 0
+PULS Freq Per: 72 823
+RESP Freq Per: 0 0
+EXT  Freq Per: 0 0
+ECG  Min Max Avg StdDiff: 0 0 0 0
+PULS Min Max Avg StdDiff: 355 1646 795 5
+RESP Min Max Avg StdDiff: 0 0 0 0
+EXT  Min Max Avg StdDiff: 0 0 0 0
+NrTrig NrMP NrArr AcqWin: 0 0 0 0
+LogStartMDHTime:  36632877
+LogStopMDHTime:   39805825
+LogStartMPCUTime: 36632400
+LogStopMPCUTime:  39804637
+6003
+"""
+
+
+def test_physio_log_simple_2():
+    log = fpl.PhysioLog(INPUT2_S)
+
+    expected = [367, 508, 520, 532, 638, 708, 790, 1037, 1108, 1072, 1190, 1413]
+    assert len(log.ts) == len(expected)
+    assert all(a == e for a, e in zip(log.ts, expected))
+
+    assert log.rate == 20
+    assert log.params == (1, 8, 20, 2)
+    assert log.info == []
+
+    assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+    assert log.puls == fpl.MeasurementSummary(72, 823, 355, 1646, 795, 5)
+    assert log.resp == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+    assert log.ext == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+
+    assert log.nr == fpl.NrSummary(0, 0, 0, 0)
+
+    assert log.mdh == fpl.LogTime(start=36632877, stop=39805825)
+    assert log.mpcu == fpl.LogTime(start=36632400, stop=39804637)
+
+
+INPUT3_S = """\
+1 1 2 40 280 5002 LOGVERSION 102 6002 5002 TRIGGERMETHOD 10 6002 5002 MSGTYPE 103 6002 5002 MSGTYPE 220 eTriggerMethod: 10, minLimitCh1: 0, maxLimitCh1: 0, minLimitAVF: 0, maxLimitAVF: 0 6002 5002 MSGTYPE 210 6002 2048 10240 2048 10240 2048 5003
+ECG  Freq Per: 0 0
+PULS Freq Per: 148 405
+RESP Freq Per: 12 4660
+EXT  Freq Per: 0 0
+ECG  Min Max Avg StdDiff: 0 0 0 0
+PULS Min Max Avg StdDiff: 180 1142 498 17
+RESP Min Max Avg StdDiff: 4400 5740 4973 44
+EXT  Min Max Avg StdDiff: 0 0 0 0
+NrTrig NrMP NrArr AcqWin: 0 0 0 0
+LogStartMDHTime:  45927805
+LogStopMDHTime:   46228520
+LogStartMPCUTime: 45927897
+LogStopMPCUTime:  46227375
+6003
+"""
+
+
+def test_physio_log_with_info():
+    log = fpl.PhysioLog(INPUT3_S)
+
+    expected = [2048, 10240, 2048, 10240, 2048]
+    assert len(log.ts) == len(expected)
+    assert all(a == e for a, e in zip(log.ts, expected))
+
+    assert log.rate == 40
+    assert log.params == (1, 1, 2, 40, 280)
+    assert len(log.info) == 5
+
+    assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+    assert log.puls == fpl.MeasurementSummary(148, 405, 180, 1142, 498, 17)
+    assert log.resp == fpl.MeasurementSummary(12, 4660, 4400, 5740, 4973, 44)
+    assert log.ext == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+
+    assert log.nr == fpl.NrSummary(0, 0, 0, 0)
+
+    assert log.mdh == fpl.LogTime(start=45927805, stop=46228520)
+    assert log.mpcu == fpl.LogTime(start=45927897, stop=46227375)
+
+
+INPUT4_S = """\
+1 2 40 280 5002 Logging PULSE signal: reduction factor = 1, PULS_SAMPLES_PER_SECOND = 50; PULS_SAMPLE_INTERVAL = 20000 6002 1653 1593 5000 1510 1484 5002
+ACQ FINISHED
+ 6002 3093 3096 3064 5000 3016 2926 5003
+ECG  Freq Per: 0 0
+PULS Freq Per: 66 906
+RESP Freq Per: 18 3260
+EXT  Freq Per: 0 0
+ECG  Min Max Avg StdDiff: 0 0 0 0
+PULS Min Max Avg StdDiff: 731 1113 914 1
+RESP Min Max Avg StdDiff: 3080 4540 3779 73
+EXT  Min Max Avg StdDiff: 0 0 0 0
+NrTrig NrMP NrArr AcqWin: 0 0 0 0
+LogStartMDHTime:  47029710
+LogStopMDHTime:   47654452
+LogStartMPCUTime: 47030087
+LogStopMPCUTime:  47652240
+6003
+"""
+
+
+def test_physio_log_with_multiline_body():
+    log = fpl.PhysioLog(INPUT4_S)
+
+    expected = [1653, 1593, 1510, 1484, 3093, 3096, 3064, 3016, 2926]
+    assert len(log.ts) == len(expected)
+    assert all(a == e for a, e in zip(log.ts, expected))
+
+    assert log.rate == 40
+    assert log.params == (1, 2, 40, 280)
+    assert len(log.info) == 2
+
+    assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+    assert log.puls == fpl.MeasurementSummary(66, 906, 731, 1113, 914, 1)
+    assert log.resp == fpl.MeasurementSummary(18, 3260, 3080, 4540, 3779, 73)
+    assert log.ext == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
+
+    assert log.nr == fpl.NrSummary(0, 0, 0, 0)
+
+    assert log.mdh == fpl.LogTime(start=47029710, stop=47654452)
+    assert log.mpcu == fpl.LogTime(start=47030087, stop=47652240)
+
+
+def test_physio_log_from_filename(sample_puls_file: Path):
     log = fpl.PhysioLog.from_filename(sample_puls_file)
 
-    _e = [367, 508, 520, 532, 638, 708, 790, 814, 1037, 1108, 1072, 1190, 1413]
+    _e = [367, 508, 520, 532, 638, 708, 790, 1037, 1108, 1072, 1190, 1413]
     assert len(log.ts) == len(_e)
     assert all(a == e for a, e in zip(log.ts, _e))
 
