@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fmri-physio-log"
-version = "0.2.0rc0"
+version = "0.2.0rc1"
 description = "Load fMRI PMU files into python"
 authors = [
     "Andrew Ross <andrew.ross.mail@gmail.com>"
