@@ -17,7 +17,7 @@ from pyparsing import Suppress
 from pyparsing import Word
 
 
-__version__ = "0.1.2"
+__version__ = "0.2.0rc0"
 
 
 class PhysioLog:
