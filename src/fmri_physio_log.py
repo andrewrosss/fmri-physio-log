@@ -123,6 +123,36 @@ class PhysioLog:
 
 
 def create_grammar():
+    """Creates the pyparsing grammar used parse pmu files.
+
+    Roughly speaking, this is the PMU grammar that this function creates:
+
+    <content> ::= <body> <footer>
+
+    <body> ::= <params> <data>
+    <params> ::= <detailed_params> | <simple_params>
+    <simple_params> ::= INT INT INT INT
+    <detailed_params> ::= INT INT INT INT [INT] <info>
+    <info> ::= 5002 PRINTABLE 6002
+    <data> ::= (<info> | 5000 | INT)+
+
+    <footer> ::= 5003 <footer_line> [<footer_line>]+ 6003
+    <footer_line> ::= <rate_line> | <stat_line> | <nr_line> | <log_line>
+    <rate_line> ::= <modality> <rate>
+    <rate> ::= <rate_prefix> INT INT
+    <rate_prefix> ::= 'Freq Per:'
+    <stat_line> ::= <modality> <stat>
+    <stat> ::= <stat_prefix> INT INT INT INT
+    <stat_prefix> ::= 'Min Max Avg StdDiff:'
+    <nr_line> ::= <nr_prefix> INT INT INT INT
+    <nr_prefix> ::= 'NrTrig NrMP NrArr AcqWin:'
+    <log_line> ::= <log_prefix> INT
+    <log_prefix> ::= 'LogStartMDHTime:'
+                   | 'LogStopMDHTime:'
+                   | 'LogStartMPCUTime:'
+                   | 'LogStopMPCUTime:'
+    <modality> ::= 'ECG' | 'PULS' | 'RESP' | 'EXT'
+    """
     _int = Word(nums)
 
     # footer
