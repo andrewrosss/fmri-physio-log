@@ -70,6 +70,7 @@ log.ecg  # MeasurementSummary(freq=0, per=0, min=0, max=0, avg=0, std_diff=0)
 log.puls  # MeasurementSummary(freq=72, per=823, min=355, max=1646, avg=795, std_diff=5)
 log.resp  # MeasurementSummary(freq=0, per=0, min=0, max=0, avg=0, std_diff=0)
 log.ext  # MeasurementSummary(freq=0, per=0, min=0, max=0, avg=0, std_diff=0)
+log.ext2 # None - since no EXT2 data in this file; otherwise MeasurementSummary
 
 log.nr  # NrSummary(nr_trig=0, nr_m_p=0, nr_arr=0, acq_win=0)
 

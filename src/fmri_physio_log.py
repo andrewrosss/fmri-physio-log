@@ -36,6 +36,7 @@ class PhysioLog:
         self.puls: MeasurementSummary
         self.resp: MeasurementSummary
         self.ext: MeasurementSummary
+        self.ext2: MeasurementSummary | None = None
 
         self.nr: NrSummary
 
@@ -151,12 +152,18 @@ def create_grammar():
                    | 'LogStopMDHTime:'
                    | 'LogStartMPCUTime:'
                    | 'LogStopMPCUTime:'
-    <modality> ::= 'ECG' | 'PULS' | 'RESP' | 'EXT'
+    <modality> ::= 'ECG' | 'PULS' | 'RESP' | 'EXT' | 'EXT2'
     """
     _int = Word(nums)
 
     # footer
-    modality = Literal("ECG") | Literal("PULS") | Literal("RESP") | Literal("EXT")
+    modality = (
+        Literal("ECG")
+        | Literal("PULS")
+        | Literal("RESP")
+        | Literal("EXT2")
+        | Literal("EXT")
+    )
     log_type = Literal("MDH") | Literal("MPCU")
     log_event = Literal("Start") | Literal("Stop")
     rate = (
@@ -246,7 +253,8 @@ class LogTime:
 
     @staticmethod
     def logptime(timestamp: int) -> datetime.time:
-        """Converts an integer denoting milliseconds past midnight to a datetime.time object.
+        """Converts an integer denoting milliseconds past midnight to a
+        datetime.time object.
 
         Args:
             timestamp (int): The integer to convert.

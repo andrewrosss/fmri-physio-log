@@ -196,8 +196,8 @@ def test_physio_log_with_multiline_body():
     assert log.mpcu == fpl.LogTime(start=47030087, stop=47652240)
 
 
-def test_physio_log_from_filename(sample_puls_file: Path):
-    log = fpl.PhysioLog.from_filename(sample_puls_file)
+def test_physio_log_from_filename_basic(sample_basic_puls_file: Path):
+    log = fpl.PhysioLog.from_filename(sample_basic_puls_file)
 
     _e = [367, 508, 520, 532, 638, 708, 790, 1037, 1108, 1072, 1190, 1413]
     assert len(log.ts) == len(_e)
@@ -238,6 +238,7 @@ def test_physio_log_from_filename(sample_puls_file: Path):
         avg=0,
         std_diff=0,
     )
+    assert log.ext2 is None
 
     assert log.nr == fpl.NrSummary(nr_trig=0, nr_m_p=0, nr_arr=0, acq_win=0)
 
@@ -248,3 +249,82 @@ def test_physio_log_from_filename(sample_puls_file: Path):
     assert log.mdh.stop_time == datetime.time(11, 3, 25, 825000)
     assert log.mpcu.start_time == datetime.time(10, 10, 32, 400000)
     assert log.mpcu.stop_time == datetime.time(11, 3, 24, 637000)
+
+
+def test_physio_log_from_filename_with_ext2(sample_with_ext2_file: Path):
+    log = fpl.PhysioLog.from_filename(sample_with_ext2_file)
+
+    _e = [
+        2594,
+        2642,
+        2690,
+        2732,
+        2774,
+        2816,
+        2852,
+        2888,
+        2924,
+        2960,
+        3062,
+        3044,
+        3020,
+        2996,
+        2978,
+        2954,
+    ]
+    assert len(log.ts) == len(_e)
+    assert all(a == e for a, e in zip(log.ts, _e))
+
+    assert log.rate == 40
+    assert log.params == (1, 2, 40, 280)
+
+    assert log.ecg == fpl.MeasurementSummary(
+        freq=0,
+        per=0,
+        min=65,
+        max=1142,
+        avg=532,
+        std_diff=238,
+    )
+    assert log.puls == fpl.MeasurementSummary(
+        freq=91,
+        per=657,
+        min=153,
+        max=4642,
+        avg=659,
+        std_diff=7,
+    )
+    assert log.resp == fpl.MeasurementSummary(
+        freq=19,
+        per=3020,
+        min=1780,
+        max=8880,
+        avg=3025,
+        std_diff=873,
+    )
+    assert log.ext == fpl.MeasurementSummary(
+        freq=0,
+        per=0,
+        min=0,
+        max=0,
+        avg=0,
+        std_diff=0,
+    )
+    assert log.ext2 == fpl.MeasurementSummary(
+        freq=0,
+        per=0,
+        min=0,
+        max=0,
+        avg=0,
+        std_diff=0,
+    )
+
+    assert log.nr == fpl.NrSummary(nr_trig=0, nr_m_p=0, nr_arr=0, acq_win=0)
+
+    assert log.mdh == fpl.LogTime(start=71409847, stop=71774492)
+    assert log.mpcu == fpl.LogTime(start=71412077, stop=71776222)
+
+    assert log.mdh.start_time == datetime.time(19, 50, 9, 847000)
+    assert log.mdh.stop_time == datetime.time(19, 56, 14, 492000)
+    assert log.mpcu.start_time == datetime.time(19, 50, 12, 77000)
+    assert log.mpcu.stop_time == datetime.time(19, 56, 16, 222000)
