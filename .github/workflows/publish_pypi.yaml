@@ -6,20 +6,20 @@ on:
       - created
 
 jobs:
-  wheels:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Set up Python 3.8
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.x"
 
       - name: Install Poetry
         run: |
-          export POETRY_VERSION=1.1.12
+          export POETRY_VERSION=1.5.1
           curl -sSL https://install.python-poetry.org | python3 -
           export PATH="${HOME}/.local/bin:$PATH"
           echo "${PATH}" >> "${GITHUB_PATH}"
