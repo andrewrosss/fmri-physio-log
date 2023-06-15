@@ -2,6 +2,7 @@ import datetime
 from pathlib import Path
 
 import fmri_physio_log as fpl
+import pytest
 
 
 def test_measurement_summary():
@@ -328,3 +329,17 @@ def test_physio_log_from_filename_with_ext2(sample_with_ext2_file: Path):
     assert log.mdh.stop_time == datetime.time(19, 56, 14, 492000)
     assert log.mpcu.start_time == datetime.time(19, 50, 12, 77000)
     assert log.mpcu.stop_time == datetime.time(19, 56, 16, 222000)
+
+
+sample_dir = Path(__file__).parent.parent / "samples"
+sample_files = [p for p in sample_dir.rglob("*") if p.is_file()]
+
+
+@pytest.mark.parametrize(
+    "filename",
+    sample_files,
+    ids=lambda p: str(p.relative_to(sample_dir)),
+)
+def test_samples_files_are_parsable(filename: Path):
+    log = fpl.PhysioLog.from_filename(filename)
+    assert log is not None
