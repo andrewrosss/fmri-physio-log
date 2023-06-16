@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fmri-physio-log"
-version = "0.2.0"
+version = "0.3.0"
 description = "Parse Siemens PMU files"
 authors = [
     "Andrew Ross <andrew.ross.mail@gmail.com>"
