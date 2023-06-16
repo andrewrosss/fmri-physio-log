@@ -2,7 +2,7 @@
 
 Parse Siemens PMU files
 
-[![PyPI Version](https://img.shields.io/pypi/v/fmri-physio-log.svg)](https://pypi.org/project/fmri-physio-log/) [![Tests](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/unittests.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/unittests.yaml) [![Code Style](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/linter.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/linter.yaml) [![Type Check](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/type-check.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/type-check.yaml)
+[![PyPI Version](https://img.shields.io/pypi/v/fmri-physio-log.svg)](https://pypi.org/project/fmri-physio-log/) [![Tests](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/test.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/test.yaml) [![Code Style](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/linter.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/linter.yaml) [![Type Check](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/type-check.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/type-check.yaml)
 
 ## Installation
 

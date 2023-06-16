@@ -91,7 +91,7 @@ class PhysioLog:
     def _footer(self, footer: ParseResults) -> None:
         """Interpret the physio footer (everything after the '5003' tag)
 
-        The footer si composed of the 'measurement summaries'
+        The footer is composed of the 'measurement summaries'
         (freq, per, min, max, etc.), the 'nr summary' and 'log times'
         """
         _summaries: dict[str, list[int]] = defaultdict(list)
@@ -124,7 +124,7 @@ class PhysioLog:
 
 
 def create_grammar():
-    """Creates the pyparsing grammar used parse pmu files.
+    """Creates the pyparsing grammar used to parse pmu files.
 
     Roughly speaking, this is the PMU grammar that this function creates:
 
