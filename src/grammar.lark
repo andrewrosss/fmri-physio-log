@@ -2,7 +2,7 @@ start: body footer
 
 body: params data
 params: detailed_params | simple_params
-detailed_params: INT INT INT INT [INT] info
+detailed_params.1: INT INT INT INT [INT] info // .1 = prefer detailed_params
 simple_params: INT INT INT INT
 data: (info | "5000" | datum)+
 datum: INT
