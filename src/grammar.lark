@@ -4,32 +4,41 @@ body: params data
 params: detailed_params | simple_params
 detailed_params: INT INT INT INT [INT] info
 simple_params: INT INT INT INT
+data: (info | "5000" | datum)+
+datum: INT
+
 info: "5002" INFO_BODY "6002"
-data: (info | "5000" | INT)+
+INFO_BODY: /[^\s]+.+?(?=\s*?6002)/
 
 footer: "5003" footer_line+ "6003"
 footer_line: rate_line | stat_line | nr_line | log_line
 
 rate_line: modality rate
-rate: rate_prefix INT INT
-rate_prefix: "Freq Per:"
+rate: "Freq Per" ":" INT INT
 
 stat_line: modality stat
-stat: stat_prefix INT INT INT INT
-stat_prefix: "Min Max Avg StdDiff:"
+stat: "Min Max Avg StdDiff" ":" INT INT INT INT
 
-nr_line: nr_prefix INT INT INT INT
-nr_prefix: "NrTrig NrMP NrArr AcqWin:"
+nr_line: "NrTrig NrMP NrArr AcqWin" ":" INT INT INT INT
 
-log_line: log_prefix INT
-log_prefix: "LogStartMDHTime:"
-          | "LogStopMDHTime:"
-          | "LogStartMPCUTime:"
-          | "LogStopMPCUTime:"
+log_line: _log_type ":" INT
+_log_type: LOG_START_MDH_TIME
+         | LOG_STOP_MDH_TIME
+         | LOG_START_MPCU_TIME
+         | LOG_STOP_MPCU_TIME
 
-modality: "ECG" | "PULS" | "RESP" | "EXT" | "EXT2"
+LOG_START_MDH_TIME: "LogStartMDHTime"
+LOG_STOP_MDH_TIME: "LogStopMDHTime"
+LOG_START_MPCU_TIME: "LogStartMPCUTime"
+LOG_STOP_MPCU_TIME: "LogStopMPCUTime"
 
-INFO_BODY: /[^\s]+.+?(?=\s*?6002)/
+modality: ECG | PULS | RESP | EXT | EXT2
+
+ECG: "ECG"
+PULS: "PULS"
+RESP: "RESP"
+EXT: "EXT"
+EXT2: "EXT2"
 
 %import common.INT
 %import common.WS
