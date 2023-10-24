@@ -2,8 +2,7 @@ start: body footer
 
 body: params data
 params: INT ~ 5
-data: (info | "5000" | datum)+
-datum: INT
+data: (info | "5000" | "6000" | INT)+ // 5000 and 6000 will be ignored
 
 info: "5002" INFO_BODY "6002"
 INFO_BODY: /[^\s]+.+?(?=\s*?6002)/
