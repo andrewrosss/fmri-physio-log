@@ -17,6 +17,7 @@ from pyparsing import Suppress
 from pyparsing import Word
 
 
+# If this line moves files, update .bumpversion.cfg
 __version__ = "0.3.1"
 
 
