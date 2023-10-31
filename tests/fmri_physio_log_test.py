@@ -133,7 +133,7 @@ LogStopMPCUTime:  46227375
 
 
 def test_physio_log_with_info():
-    log = fpl.PhysioLog(INPUT3_S)
+    log = fpl.PhysioLog(INPUT3_S, n_params=5)
 
     expected = [2048, 10240, 2048, 10240, 2048]
     assert len(log.ts) == len(expected)
