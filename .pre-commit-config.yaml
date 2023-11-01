@@ -1,3 +1,4 @@
+exclude: _generated\.py
 default_language_version:
   python: python3.8
 repos:
@@ -19,7 +20,6 @@ repos:
     rev: 23.3.0
     hooks:
       - id: black
-        exclude: _generated\.py
   - repo: https://github.com/PyCQA/flake8
     rev: 6.0.0
     hooks:
@@ -30,7 +30,6 @@ repos:
           - "--max-line-length=88"
           - "--min-python-version=3.8.0"
           - "--ignore=E203,W503"
-        exclude: _generated\.py
   - repo: https://github.com/asottile/reorder_python_imports
     rev: v3.9.0
     hooks:
