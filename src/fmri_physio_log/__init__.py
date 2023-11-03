@@ -8,7 +8,7 @@ from typing import Any
 from typing import NamedTuple
 from typing import TextIO
 
-from fmri_physio_log._generated import Lark_StandAlone as _Lark_StandAlone
+from fmri_physio_log._generated import Lark_StandAlone as _PhysioLogParser
 from fmri_physio_log._generated import Tree as _Tree
 from fmri_physio_log._generated import Visitor_Recursive as _Visitor_Recursive
 
@@ -18,13 +18,20 @@ __version__ = "0.3.1"
 
 
 class PhysioLog:
-    def __init__(self, content: str, *, n_params: int = 4):
+    def __init__(self, content: str, *, n_params: int | None = None):
+        # constructor args
         self.content = content
-        self.n_params = n_params
+        self.n_params = (
+            self.determine_params_heuristically(content)
+            if n_params is None
+            else n_params
+        )
 
-        self._parser = _Lark_StandAlone()
+        # internal attributes
+        self._parser = _PhysioLogParser()
         self._visitor = _PhysioLogVisitor()
 
+        # public attributes
         self.data: list[int]
 
         self.params: tuple[int, ...]
@@ -73,7 +80,7 @@ class PhysioLog:
         and the data.
         """
         self.params = tuple(self._visitor._data[: self.n_params])
-        self.rate = self.params[2] if len(self.params) == 4 else self.params[3]
+        self.rate = self.params[2] if self.n_params == 4 else self.params[3]
         self.info = self._visitor._info[:]
         self.ts = self._visitor._data[self.n_params :]
 
@@ -84,13 +91,16 @@ class PhysioLog:
         (freq, per, min, max, etc.), the 'nr summary' and 'log times'
         """
         # set the nr summary attributes
+        # TODO(andrewrosss): add runtime (length) checks splatting args
         self.nr = NrSummary(*self._visitor._nr)
 
         # set the measurement summary attributes
+        # TODO(andrewrosss): add runtime (length) checks splatting args
         for attr, values in self._visitor._summaries.items():
             setattr(self, attr.lower(), MeasurementSummary(*values))
 
         # set the log time attributes
+        # TODO(andrewrosss): add runtime (length) checks splatting args
         for attr, values in self._visitor._logs.items():
             setattr(self, attr.lower(), LogTime(*values))
 
