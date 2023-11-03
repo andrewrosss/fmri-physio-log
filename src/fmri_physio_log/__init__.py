@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -92,6 +93,15 @@ class PhysioLog:
         # set the log time attributes
         for attr, values in self._visitor._logs.items():
             setattr(self, attr.lower(), LogTime(*values))
+
+    @staticmethod
+    def determine_params_heuristically(content: str) -> int:
+        # if the first 4 or 5 numbers are followed by a 5002 (info/comment
+        # section) then we assume that all numbers before that are params
+        regex = re.compile(r"^\s*((?:\d+\s+){4,5})5002")
+        if (m := regex.match(content)) is not None:
+            return len(m.group(1).split())
+        return 4  # default to 4 params
 
 
 class MeasurementSummary(NamedTuple):
