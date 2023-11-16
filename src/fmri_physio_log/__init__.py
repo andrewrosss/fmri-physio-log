@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import contextlib
 import datetime
 import re
+import warnings
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -28,6 +30,8 @@ class PhysioLog:
     N_PARAMS_DEFAULT = 4
 
     def __init__(self, content: str, *, n_params: int | None = None):
+        self.__maybe_emit_init_warning()
+
         # constructor args
         self.content = content
         self.n_params = (
@@ -64,17 +68,20 @@ class PhysioLog:
 
     @classmethod
     def from_string(cls, content: str, *, n_params: int | None = None):
-        return cls(content, n_params=n_params)
+        with _disable_init_warning():
+            return cls(content, n_params=n_params)
 
     @classmethod
     def from_file(cls, file: TextIO, *, n_params: int | None = None):
         content = file.read()
-        return cls(content, n_params=n_params)
+        with _disable_init_warning():
+            return cls(content, n_params=n_params)
 
     @classmethod
     def from_filename(cls, filename: str | Path, *, n_params: int | None = None):
         content = Path(filename).read_text()
-        return cls(content, n_params=n_params)
+        with _disable_init_warning():
+            return cls(content, n_params=n_params)
 
     def parse(self):
         # parse the content with the grammer
@@ -122,6 +129,19 @@ class PhysioLog:
         if (m := regex.match(content)) is not None:
             return len(m.group(1).split())
         return cls.N_PARAMS_DEFAULT
+
+    def __maybe_emit_init_warning(self):
+        """Emit a warning if the user uses the constructor directly. Remove in v0.4.x"""
+        if _EMIT_INIT_WARNING:
+            classname = self.__class__.__name__
+            warnings.warn(
+                f"Direct use of `{classname}.__init__` (i.e. "
+                f"`{classname}(content)`) is deprecated. Please use "
+                f"`{classname}.from_string(content)` instead (or migrate to "
+                f"one of the other `{classname}.from_*` classmethods)",
+                FutureWarning,
+                stacklevel=2,
+            )
 
 
 class MeasurementSummary(NamedTuple):
@@ -243,3 +263,19 @@ def _iter_ints(tree: _Tree):
                 yield from _iter_ints(c)
             elif c.type == "INT":
                 yield int(c)
+
+
+_EMIT_INIT_WARNING = True
+
+
+@contextlib.contextmanager
+def _disable_init_warning():
+    """Utility to disable warnings from PhysioLog.__init__ (used by
+    PhysioLog classmethods)
+    """
+    global _EMIT_INIT_WARNING
+    _EMIT_INIT_WARNING = False
+    try:
+        yield
+    finally:
+        _EMIT_INIT_WARNING = True
