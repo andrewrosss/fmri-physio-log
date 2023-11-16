@@ -18,6 +18,8 @@ __version__ = "0.3.2rc0"
 
 
 class PhysioLog:
+    N_PARAMS_DEFAULT = 4
+
     def __init__(self, content: str, *, n_params: int | None = None):
         # constructor args
         self.content = content
@@ -54,14 +56,18 @@ class PhysioLog:
         self.parse()
 
     @classmethod
-    def from_file(cls, file: TextIO):
-        content = file.read()
-        return PhysioLog(content)
+    def from_string(cls, content: str, *, n_params: int | None = None):
+        return cls(content, n_params=n_params)
 
     @classmethod
-    def from_filename(cls, filename: str | Path):
+    def from_file(cls, file: TextIO, *, n_params: int | None = None):
+        content = file.read()
+        return cls(content, n_params=n_params)
+
+    @classmethod
+    def from_filename(cls, filename: str | Path, *, n_params: int | None = None):
         content = Path(filename).read_text()
-        return PhysioLog(content)
+        return cls(content, n_params=n_params)
 
     def parse(self):
         # parse the content with the grammer
@@ -101,14 +107,14 @@ class PhysioLog:
         for attr, values in self._visitor._logs.items():
             setattr(self, attr.lower(), LogTime(*values))
 
-    @staticmethod
-    def determine_params_heuristically(content: str) -> int:
+    @classmethod
+    def determine_params_heuristically(cls, content: str) -> int:
         # if the first 4 or 5 numbers are followed by a 5002 (info/comment
         # section) then we assume that all numbers before that are params
         regex = re.compile(r"^\s*((?:\d+\s+){4,5})5002")
         if (m := regex.match(content)) is not None:
             return len(m.group(1).split())
-        return 4  # default to 4 params
+        return cls.N_PARAMS_DEFAULT
 
 
 class MeasurementSummary(NamedTuple):
