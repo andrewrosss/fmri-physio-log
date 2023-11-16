@@ -16,7 +16,7 @@ from fmri_physio_log._generated import Visitor_Recursive as _Visitor_Recursive
 
 
 # If this line moves files, update .bumpversion.cfg
-__version__ = "0.3.2rc0"
+__version__ = "0.3.2rc1"
 
 __all__ = (
     "PhysioLog",
