@@ -66,9 +66,9 @@ class PhysioLog:
     def parse(self):
         # parse the content with the grammer
         tree = self._parser.parse(self.content)
-        self._visitor.visit(tree)
 
         # interpret the parsed content
+        self._visitor.visit(tree)
         self._body()
         self._footer()
 
@@ -91,16 +91,13 @@ class PhysioLog:
         (freq, per, min, max, etc.), the 'nr summary' and 'log times'
         """
         # set the nr summary attributes
-        # TODO(andrewrosss): add runtime (length) checks splatting args
         self.nr = NrSummary(*self._visitor._nr)
 
         # set the measurement summary attributes
-        # TODO(andrewrosss): add runtime (length) checks splatting args
         for attr, values in self._visitor._summaries.items():
             setattr(self, attr.lower(), MeasurementSummary(*values))
 
         # set the log time attributes
-        # TODO(andrewrosss): add runtime (length) checks splatting args
         for attr, values in self._visitor._logs.items():
             setattr(self, attr.lower(), LogTime(*values))
 
