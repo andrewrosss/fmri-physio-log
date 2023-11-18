@@ -52,7 +52,7 @@ LogStopMPCUTime:  46462615
 
 
 def test_physio_log_simple_1():
-    log = fpl.PhysioLog(INPUT1_S)
+    log = fpl.PhysioLog.from_string(INPUT1_S)
 
     expected = [1236, 1251, 1679, 1871]
     assert len(log.ts) == len(expected)
@@ -93,7 +93,7 @@ LogStopMPCUTime:  39804637
 
 
 def test_physio_log_simple_2():
-    log = fpl.PhysioLog(INPUT2_S)
+    log = fpl.PhysioLog.from_string(INPUT2_S)
 
     expected = [367, 508, 520, 532, 638, 708, 790, 1037, 1108, 1072, 1190, 1413]
     assert len(log.ts) == len(expected)
@@ -134,7 +134,7 @@ LogStopMPCUTime:  46227375
 
 
 def test_physio_log_with_info():
-    log = fpl.PhysioLog(INPUT3_S)
+    log = fpl.PhysioLog.from_string(INPUT3_S)
 
     expected = [2048, 10240, 2048, 10240, 2048]
     assert len(log.ts) == len(expected)
@@ -177,7 +177,7 @@ LogStopMPCUTime:  47652240
 
 
 def test_physio_log_with_multiline_body():
-    log = fpl.PhysioLog(INPUT4_S)
+    log = fpl.PhysioLog.from_string(INPUT4_S)
 
     expected = [1653, 1593, 1510, 1484, 3093, 3096, 3064, 3016, 2926]
     assert len(log.ts) == len(expected)
@@ -344,3 +344,12 @@ sample_files = [p for p in sample_dir.rglob("*") if p.is_file()]
 def test_samples_files_are_parsable(filename: Path):
     log = fpl.PhysioLog.from_filename(filename)
     assert log is not None
+
+
+def test_warning_emitted_from_direct_constructor_call():
+    """Test that we emit a warning when calling the constructor directly.
+
+    Remove in v0.4.x
+    """
+    with pytest.warns(FutureWarning):
+        fpl.PhysioLog(INPUT1_S)
