@@ -5,8 +5,9 @@ import datetime
 import re
 import warnings
 from collections import defaultdict
+from dataclasses import dataclass
+from dataclasses import field
 from pathlib import Path
-from typing import Any
 from typing import NamedTuple
 from typing import TextIO
 
@@ -160,23 +161,16 @@ class NrSummary(NamedTuple):
     acq_win: int
 
 
+@dataclass
 class LogTime:
-    def __init__(self, start: int, stop: int):
-        self.start = start
-        self.stop = stop
-        self.start_time = self.logptime(start)
-        self.stop_time = self.logptime(stop)
+    start: int
+    stop: int
+    start_time: datetime.time = field(init=False, repr=False, compare=False)
+    stop_time: datetime.time = field(init=False, repr=False, compare=False)
 
-    def __repr__(self):
-        start, stop = self.start, self.stop
-        return f"{self.__class__.__name__}(start={start!r}, stop={stop!r})"
-
-    def __eq__(self, o: Any) -> bool:
-        return (
-            isinstance(o, self.__class__)
-            and self.start == o.start
-            and self.stop == o.stop
-        )
+    def __post_init__(self):
+        self.start_time = self.logptime(self.start)
+        self.stop_time = self.logptime(self.stop)
 
     @staticmethod
     def logptime(timestamp: int) -> datetime.time:
