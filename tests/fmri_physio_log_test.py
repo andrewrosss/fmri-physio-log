@@ -62,6 +62,9 @@ def test_physio_log_simple_1():
     assert log.params == (1, 2, 40, 280)
     assert log.info == []
 
+    assert len(log.data) == log.n_params + len(log.ts)
+    assert log.data == [*log.params, *log.ts]
+
     assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
     assert log.puls == fpl.MeasurementSummary(75, 790, 211, 1055, 530, 47)
     assert log.resp == fpl.MeasurementSummary(11, 5400, 4400, 5600, 5000, 81)
@@ -103,6 +106,9 @@ def test_physio_log_simple_2():
     assert log.params == (1, 8, 20, 2)
     assert log.info == []
 
+    assert len(log.data) == log.n_params + len(log.ts)
+    assert log.data == [*log.params, *log.ts]
+
     assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
     assert log.puls == fpl.MeasurementSummary(72, 823, 355, 1646, 795, 5)
     assert log.resp == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
@@ -143,6 +149,9 @@ def test_physio_log_with_info():
     assert log.rate == 40
     assert log.params == (1, 1, 2, 40, 280)
     assert len(log.info) == 5
+
+    assert len(log.data) == log.n_params + len(log.ts)
+    assert log.data == [*log.params, *log.ts]
 
     assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
     assert log.puls == fpl.MeasurementSummary(148, 405, 180, 1142, 498, 17)
@@ -187,6 +196,9 @@ def test_physio_log_with_multiline_body():
     assert log.params == (1, 2, 40, 280)
     assert len(log.info) == 2
 
+    assert len(log.data) == log.n_params + len(log.ts)
+    assert log.data == [*log.params, *log.ts]
+
     assert log.ecg == fpl.MeasurementSummary(0, 0, 0, 0, 0, 0)
     assert log.puls == fpl.MeasurementSummary(66, 906, 731, 1113, 914, 1)
     assert log.resp == fpl.MeasurementSummary(18, 3260, 3080, 4540, 3779, 73)
@@ -207,6 +219,9 @@ def test_physio_log_from_filename_basic(sample_basic_puls_file: Path):
 
     assert log.rate == 20
     assert log.params == (1, 8, 20, 2)
+
+    assert len(log.data) == log.n_params + len(log.ts)
+    assert log.data == [*log.params, *log.ts]
 
     assert log.ecg == fpl.MeasurementSummary(
         freq=0,
@@ -279,6 +294,9 @@ def test_physio_log_from_filename_with_ext2(sample_with_ext2_file: Path):
 
     assert log.rate == 40
     assert log.params == (1, 2, 40, 280)
+
+    assert len(log.data) == log.n_params + len(log.ts)
+    assert log.data == [*log.params, *log.ts]
 
     assert log.ecg == fpl.MeasurementSummary(
         freq=0,

@@ -104,6 +104,7 @@ class PhysioLog:
         self.rate = self.params[2] if self.n_params == 4 else self.params[3]
         self.info = self._visitor._info[:]
         self.ts = self._visitor._data[self.n_params :]
+        self.data = self._visitor._data.copy()
 
     def _footer(self) -> None:
         """Interpret the physio footer (everything after the '5003' tag)
