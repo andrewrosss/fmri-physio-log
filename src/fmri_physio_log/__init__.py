@@ -137,7 +137,8 @@ class PhysioLog:
             classname = self.__class__.__name__
             warnings.warn(
                 f"Direct use of `{classname}.__init__` (i.e. "
-                f"`{classname}(content)`) is deprecated. Please use "
+                f"`{classname}(content_str)`) is deprecated. The signature "
+                "will change in the 0.4 release. Please use "
                 f"`{classname}.from_string(content)` instead (or migrate to "
                 f"one of the other `{classname}.from_*` classmethods)",
                 FutureWarning,
@@ -249,6 +250,7 @@ class _PhysioLogVisitor(_Visitor_Recursive):
 
 
 def _iter_ints(tree: _Tree):
+    """Recursively iterate over all integers in a tree (depth-first)"""
     if hasattr(tree.data, "type") and tree.data.type == "INT":  # type: ignore
         yield int(tree.data)
     else:
