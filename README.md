@@ -59,7 +59,7 @@ LogStopMPCUTime:  39804637
 6003
 """
 
-log = fpl.PhysioLog(CONTENT)
+log = fpl.PhysioLog.from_string(CONTENT)
 
 log.ts  # [367, 508, 520, 532, 638, 708, 790, 1037, 1108, 1072, 1190, 1413]
 log.rate  # 20
