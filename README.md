@@ -2,7 +2,7 @@
 
 Parse Siemens PMU files
 
-[![PyPI Version](https://img.shields.io/pypi/v/fmri-physio-log.svg)](https://pypi.org/project/fmri-physio-log/) [![Tests](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/test.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/test.yaml) [![Code Style](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/linter.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/linter.yaml) [![Type Check](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/type-check.yaml/badge.svg)](https://github.com/andrewrosss/fmri-physio-log/actions/workflows/type-check.yaml)
+[![PyPI Version](https://img.shields.io/pypi/v/fmri-physio-log.svg)](https://pypi.org/project/fmri-physio-log/)
 
 ## Installation
 
@@ -125,7 +125,7 @@ The following sources were referenced in constructing the grammar:
 
 ## Contributing
 
-1. Have or install a recent version of `poetry` (version >= 1.1)
+1. Have or install a recent version of `poetry` (version >= 1.8)
 1. Fork the repo
 1. Setup a virtual environment (however you prefer)
 1. Run `poetry install`
@@ -133,3 +133,10 @@ The following sources were referenced in constructing the grammar:
 1. Add your changes (adding/updating tests is always nice too)
 1. Commit your changes + push to your fork
 1. Open a PR
+
+> [!IMPORTANT]
+> If you are marking changes to the grammar (`src/grammar.lark`), you will need to regenerate the parser (`src/fmri_physio_log/_generated.py`) which can be done by running `lark`, for example:
+>
+> ```bash
+> python -m lark.tools.standalone src/grammar.lark > src/fmri_physio_log/_generated.py
+> ```
