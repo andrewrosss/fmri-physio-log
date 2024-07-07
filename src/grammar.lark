@@ -3,7 +3,7 @@ start: data footer
 data: (info | "5000" | "6000" | INT)+ // 5000 and 6000 will be ignored
 
 info: "5002" INFO_BODY "6002"
-INFO_BODY: /[^\s]+.+?(?=\s*?6002)/
+INFO_BODY: /[^\s]+.+?(?=\s+?6002\s+?)/
 
 footer: "5003" footer_line+ "6003"
 footer_line: rate_line | stat_line | nr_line | log_line
